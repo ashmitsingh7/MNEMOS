@@ -1,0 +1,318 @@
+<?xml version="1.0"?>
+<world name="lab_environment">
+
+  <include>
+    <package>gazebo_ros</package>
+    <plugin name="physics_engine" filename="libgazebo_physics_engine.so">
+      <verbose>0</verbose>
+    </plugin>
+  </include>
+
+  <background>0.3 0.3 0.3 1</background>
+  <sun>
+    <ambient>0.4 0.4 0.4</ambient>
+    <diffuse>0.8 0.8 0.8</diffuse>
+    <specular>0.2 0.2 0.2</specular>
+    <pose>-0.5 0.5 1.0 0 0 0</pose>
+  </sun>
+
+  <ground>
+    <normal>0 0 1</normal>
+    <size>50 50</size>
+    <transparency>0.3</transparency>
+    <material>Gazebo/Blue</material>
+  </ground>
+
+  <!-- Robot spawn -->
+  <include>
+    <uri>file://mnemos_diff_drive.urdf</uri>
+    <name>mnemos_robot</name>
+    <pose>0 0 0.1 0 0 0</pose>
+  </include>
+
+  <!-- Laboratory Furniture -->
+
+  <!-- Desk 1 -->
+  <model name="desk_1">
+    <pose>1.5 2.0 0.75 0 0 0</pose>
+    <link name="desk_link">
+      <visual>
+        <geometry>
+          <box size="2.0 1.0 0.75"/>
+        </geometry>
+        <material name="wood">
+          <rgb>0.5 0.35 0.1</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="2.0 1.0 0.75"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="50.0"/>
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                 iyy="1.0" iyz="0.0"
+                 jzz="1.0"/>
+      </inertial>
+    </link>
+  </model>
+
+  <!-- Desk 2 -->
+  <model name="desk_2">
+    <pose>-1.5 2.0 0.75 0 0 0</pose>
+    <link name="desk_link">
+      <visual>
+        <geometry>
+          <box size="2.0 1.0 0.75"/>
+        </geometry>
+        <material name="wood">
+          <rgb>0.5 0.35 0.1</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="2.0 1.0 0.75"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="50.0"/>
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0"
+                 iyy="1.0" iyz="0.0"
+                 jzz="1.0"/>
+      </inertial>
+    </link>
+  </model>
+
+  <!-- Shelf -->
+  <model name="shelf_1">
+    <pose>0.0 1.5 1.5 0 0 0</pose>
+    <link name="shelf_link">
+      <visual>
+        <geometry>
+          <box size="1.0 0.3 2.0"/>
+        </geometry>
+        <material name="white">
+          <rgb>0.9 0.9 0.9</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="1.0 0.3 2.0"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="30.0"/>
+        <inertia ixx="0.5" ixy="0.0" ixz="0.0"
+                 iyy="0.5" iyz="0.0"
+                 jzz="0.5"/>
+      </inertial>
+    </link>
+  </model>
+
+  <!-- Chair -->
+  <model name="chair_1">
+    <pose>2.5 3.0 0.45 0 0 0</pose>
+    <link name="chair_link">
+      <visual>
+        <geometry>
+          <box size="0.6 0.5 0.85"/>
+        </geometry>
+        <material name="gray">
+          <rgb>0.6 0.6 0.6</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.6 0.5 0.85"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="10.0"/>
+        <inertia ixx="0.1" ixy="0.0" ixz="0.0"
+                 iyy="0.1" iyz="0.0"
+                 jzz="0.1"/>
+      </inertial>
+    </link>
+  </model>
+
+  <!-- Table -->
+  <model name="table_1">
+    <pose>-2.5 -1.5 0.45 0 0 0</pose>
+    <link name="table_link">
+      <visual>
+        <geometry>
+          <box size="1.5 1.0 0.45"/>
+        </geometry>
+        <material name="brown">
+          <rgb>0.4 0.2 0.1</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="1.5 1.0 0.45"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="15.0"/>
+        <inertia ixx="0.5" ixy="0.0" ixz="0.0"
+                 iyy="0.5" iyz="0.0"
+                 jzz="0.5"/>
+      </inertial>
+    </link>
+  </model>
+
+  <!-- Corridor walls -->
+  <model name="wall_1">
+    <pose>0.0 -2.5 1.2 0 0 0</pose>
+    <link name="wall_link">
+      <visual>
+        <geometry>
+          <box size="50 0.1 2.5"/>
+        </geometry>
+        <material name="white">
+          <rgb>0.9 0.9 0.9</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="50 0.1 2.5"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="100.0"/>
+        <inertia ixx="10.0" ixy="0.0" ixz="0.0"
+                 iyy="10.0" iyz="0.0"
+                 jzz="10.0"/>
+      </inertial>
+    </link>
+  </model>
+
+  <model name="wall_2">
+    <pose>-3.0 0.0 1.2 0 0 0</pose>
+    <link name="wall_link">
+      <visual>
+        <geometry>
+          <box size="0.1 30 2.5"/>
+        </geometry>
+        <material name="white">
+          <rgb>0.9 0.9 0.9</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.1 30 2.5"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="100.0"/>
+        <inertia ixx="10.0" ixy="0.0" ixz="0.0"
+                 iyy="10.0" iyz="0.0"
+                 jzz="10.0"/>
+      </inertial>
+    </link>
+  </model>
+
+  <model name="wall_3">
+    <pose>3.0 0.0 1.2 0 0 0</pose>
+    <link name="wall_link">
+      <visual>
+        <geometry>
+          <box size="0.1 30 2.5"/>
+        </geometry>
+        <material name="white">
+          <rgb>0.9 0.9 0.9</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.1 30 2.5"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="100.0"/>
+        <inertia ixx="10.0" ixy="0.0" ixz="0.0"
+                 iyy="10.0" iyz="0.0"
+                 jzz="10.0"/>
+      </inertial>
+    </link>
+  </model>
+
+  <model name="wall_4">
+    <pose>0.0 3.0 1.2 0 0 0</pose>
+    <link name="wall_link">
+      <visual>
+        <geometry>
+          <box size="50 0.1 2.5"/>
+        </geometry>
+        <material name="white">
+          <rgb>0.9 0.9 0.9</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="50 0.1 2.5"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="100.0"/>
+        <inertia ixx="10.0" ixy="0.0" ixz="0.0"
+                 iyy="10.0" iyz="0.0"
+                 jzz="10.0"/>
+      </inertial>
+    </link>
+  </model>
+
+  <!-- Doorway -->
+  <model name="doorway_1">
+    <pose>0.0 0.5 0.6 0 0 0</pose>
+    <link name="door_link">
+      <visual>
+        <geometry>
+          <box size="0.8 0.1 1.8"/>
+        </geometry>
+        <material name="brown">
+          <rgb>0.4 0.2 0.1</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.8 0.1 1.8"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="5.0"/>
+        <inertia ixx="0.1" ixy="0.0" ixz="0.0"
+                 iyy="0.1" iyz="0.0"
+                 jzz="0.1"/>
+      </inertial>
+    </link>
+  </model>
+
+  <!-- Lab equipment -->
+  <model name="lab_equipment_1">
+    <pose>1.0 1.0 0.5 0 0 0</pose>
+    <link name="equipment_link">
+      <visual>
+        <geometry>
+          <box size="0.5 0.3 0.5"/>
+        </geometry>
+        <material name="gray">
+          <rgb>0.6 0.6 0.6</rgb>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.5 0.3 0.5"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="3.0"/>
+        <inertia ixx="0.05" ixy="0.0" ixz="0.0"
+                 iyy="0.05" iyz="0.0"
+                 jzz="0.05"/>
+      </inertial>
+    </link>
+  </model>
+
+</world>

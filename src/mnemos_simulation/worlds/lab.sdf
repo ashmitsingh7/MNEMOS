@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="mnemos_lab">
+    <physics name="1ms" type="ignored"><max_step_size>0.001</max_step_size><real_time_factor>1.0</real_time_factor></physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"><render_engine>ogre2</render_engine></plugin>
+    <light type="directional" name="sun"><cast_shadows>true</cast_shadows><pose>0 0 10 0 0 0</pose><diffuse>0.8 0.8 0.8 1</diffuse><specular>0.2 0.2 0.2 1</specular><attenuation><range>1000</range><constant>0.9</constant><linear>0.01</linear><quadratic>0.001</quadratic></attenuation><direction>-0.5 0.1 -0.9</direction></light>
+    <model name="ground"><static>true</static><link name="link"><collision name="collision"><geometry><plane><normal>0 0 1</normal><size>16 16</size></plane></geometry></collision><visual name="visual"><geometry><plane><normal>0 0 1</normal><size>16 16</size></plane></geometry><material><ambient>0.25 0.25 0.25 1</ambient><diffuse>0.35 0.35 0.35 1</diffuse></material></visual></link></model>
+    <model name="north_wall"><static>true</static><pose>0 4 1 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>8 0.15 2</size></box></geometry></collision><visual name="v"><geometry><box><size>8 0.15 2</size></box></geometry></visual></link></model>
+    <model name="south_wall"><static>true</static><pose>0 -4 1 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>8 0.15 2</size></box></geometry></collision><visual name="v"><geometry><box><size>8 0.15 2</size></box></geometry></visual></link></model>
+    <model name="west_wall"><static>true</static><pose>-4 0 1 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.15 8 2</size></box></geometry></collision><visual name="v"><geometry><box><size>0.15 8 2</size></box></geometry></visual></link></model>
+    <model name="east_wall"><static>true</static><pose>4 0 1 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.15 8 2</size></box></geometry></collision><visual name="v"><geometry><box><size>0.15 8 2</size></box></geometry></visual></link></model>
+    <model name="workbench"><static>true</static><pose>1.3 1.1 0.45 0 0 0.2</pose><link name="link"><collision name="c"><geometry><box><size>1.6 0.7 0.9</size></box></geometry></collision><visual name="v"><geometry><box><size>1.6 0.7 0.9</size></box></geometry><material><diffuse>0.45 0.25 0.1 1</diffuse></material></visual></link></model>
+    <model name="cabinet"><static>true</static><pose>-1.4 1.7 0.75 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.8 0.45 1.5</size></box></geometry></collision><visual name="v"><geometry><box><size>0.8 0.45 1.5</size></box></geometry></visual></link></model>
+    <model name="movable_box"><pose>0.9 -1.1 0.25 0 0 0</pose><link name="link"><inertial><mass>4.0</mass><inertia><ixx>0.1</ixx><iyy>0.1</iyy><izz>0.1</izz></inertia></inertial><collision name="c"><geometry><box><size>0.5 0.5 0.5</size></box></geometry></collision><visual name="v"><geometry><box><size>0.5 0.5 0.5</size></box></geometry></visual></link></model>
+  </world>
+</sdf>

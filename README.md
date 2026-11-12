@@ -119,6 +119,21 @@ Maintain a development log. Never silently skip failed tests. Never claim a feat
 
 See `docs/INSTALLATION.md` for installation instructions and `docs/TROUBLESHOOTING.md` for common issues.
 
+The runnable Milestone 3–4 baseline (Gazebo Harmonic simulation, RTAB-Map
+mapping, and Nav2 navigation) is documented in
+[`docs/BASELINE_RUNBOOK.md`](docs/BASELINE_RUNBOOK.md). The cognitive modules
+described above remain future work; the baseline is intentionally conventional
+so later experiments have an auditable comparison point.
+
+The novel MNEMOS layer is specified in
+[`docs/COGNITIVE_ARCHITECTURE.md`](docs/COGNITIVE_ARCHITECTURE.md). It records
+human corrections as validated, explainable episodic evidence and emits only
+bounded navigation-cost advice; it never blindly replays a prior route.
+
+[`docs/EXPERIMENTATION.md`](docs/EXPERIMENTATION.md) and the versioned
+ablation protocol define how the hypothesis is tested without hiding failed
+trials or safety regressions.
+
 For the initial execution instructions, see the `Initial Execution Instructions` section of the project specification (Section 20), which outlines stepping through environment inspection, repository creation, robot simulation, baseline SLAM/navigation, and reporting.
 
 ## Citation

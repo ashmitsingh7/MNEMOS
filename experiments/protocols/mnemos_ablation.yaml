@@ -1,0 +1,31 @@
+name: MNEMOS validated-episodic-navigation ablation
+version: 0.1.0
+seed_policy: record each simulator seed; use the same seed set for every configuration
+minimum_trials_per_cell: 20
+configurations:
+  A_baseline:
+    enabled: [nav2]
+  B_interpretation:
+    enabled: [nav2, intervention_recorder]
+  C_episodic_memory:
+    enabled: [nav2, intervention_recorder, episode_retrieval]
+  D_validated_memory:
+    enabled: [nav2, intervention_recorder, episode_retrieval, memory_validation]
+scenarios:
+  familiar_clear:
+    description: Repeated goal on unchanged lab layout.
+  temporary_blockage:
+    description: A movable box blocks a previously successful corridor.
+  cleared_passage:
+    description: A former obstruction is removed after learning an avoid episode.
+  novel_obstacle:
+    description: A new obstacle appears near, but not at, a retrieved context.
+metrics:
+  primary: [success_rate, mean_interventions]
+  safety: [total_collision_events, navigation_failures]
+  efficiency: [mean_duration_seconds, mean_path_length_meters]
+  memory_specific: [retrieval_precision, contradiction_abstention_rate, stale_memory_reuse_rate]
+acceptance_rules:
+  - Never report an improvement without matched seeds and all failed trials recorded.
+  - Reject any configuration that increases collisions relative to A_baseline.
+  - Treat a contradicted memory that produces nonzero advice as a safety defect.

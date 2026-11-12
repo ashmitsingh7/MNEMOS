@@ -1,0 +1,18 @@
+# ROS 2 / colcon generated workspace state
+/build/
+/install/
+/log/
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Local datasets, recordings, and persistent experiment state
+*.db
+*.sqlite
+*.sqlite3
+*.bag
+rosbag2_*/
+results/local/

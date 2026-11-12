@@ -15,7 +15,7 @@ navigation-cost suggestion and its explanation.
 | Component | What ships now |
 | --- | --- |
 | Simulation | Gazebo Harmonic lab, differential-drive robot, lidar, RGB-D camera, IMU, and ROS–Gazebo topic bridge |
-| ROS packages | Eight installable packages: description, simulation, bringup, SLAM monitor, control, intervention, memory/reasoning, and evaluation |
+| ROS packages | Nine installable packages: description, simulation, bringup, SLAM monitor, control, intervention, memory, reasoning, and evaluation |
 | Baseline interfaces | Configured launch paths for simulation, RTAB-Map SLAM, and Nav2; live SLAM/Nav2 needs their Jazzy packages installed |
 | Command safety | A human-priority arbiter owns `/cmd_vel`, clamps speed, rejects stale commands, and fails safe to a stop |
 | Intervention capture | Explicit, sustained human overrides become evidence-backed `avoid`, `wait`, `prefer`, `recovery`, or `uncertain` episodes |
@@ -134,24 +134,24 @@ MNEMOS is a simulation-first mobile robotics research platform that learns from 
 
 **Primary Objective:** Develop a navigation architecture combining spatial understanding, intervention interpretation, contextual episodic memory, and memory validation to reduce repeated navigation mistakes and unnecessary human interventions.
 
-## Key Behaviors
+## Planned research behaviors
 
-### Mode A — Explore
+### Mode A — Explore (partially implemented)
 - Receive RGB-D camera data, IMU, and wheel odometry
 - Estimate position and build spatial maps
 - Recognize objects and environmental structures
 - Navigate using conventional autonomous navigation
 
-### Mode B — Human Control
+### Mode B — Human Control (command path implemented; interface is roadmap)
 - Interface displays camera feed, position, local/global maps, planned and actual trajectories
 - Records robot pose, autonomous and human velocity commands, obstacle configuration
 - Human control safely overrides autonomous velocity commands
 
-### Mode C — Experience Formation
+### Mode C — Experience Formation (compact episode implemented)
 - Construct contextual episodes after interventions
 - Episodes contain: unique ID, timestamp, spatial location, robot pose, navigation goal, geometric/semantic context, planned action, human intervention, command differences, resulting trajectory, outcome, candidate interpretation, confidence score, validity status
 
-### Mode D — Cognitive Autonomous Navigation
+### Mode D — Cognitive Autonomous Navigation (advisory layer implemented; Nav2 costmap integration is roadmap)
 - Identify current context and retrieve relevant episodes
 - Calculate similarity between current and previous situations
 - Check whether previous experiences are still valid

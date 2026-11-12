@@ -31,9 +31,11 @@ def generate_launch_description():
         package='robot_state_publisher', executable='robot_state_publisher', output='screen',
         parameters=[{'robot_description': robot_description, 'use_sim_time': use_sim_time}],
     )
+    readiness = Node(package='mnemos_slam', executable='readiness_monitor', output='screen',
+                     parameters=[{'use_sim_time': use_sim_time}])
     return LaunchDescription([
         DeclareLaunchArgument('world', default_value=str(sim_share / 'worlds' / 'lab.sdf'),
                               description='Absolute path to a Gazebo Harmonic SDF world.'),
         DeclareLaunchArgument('use_sim_time', default_value='true'),
-        gazebo, bridge, state_publisher, spawn,
+        gazebo, bridge, state_publisher, spawn, readiness,
     ])

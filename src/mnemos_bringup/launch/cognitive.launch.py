@@ -11,6 +11,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('database_path', default_value='~/.ros/mnemos_episodes.sqlite3',
                               description='SQLite file storing auditable MNEMOS episodes.'),
+        Node(package='mnemos_control', executable='command_arbiter', output='screen'),
         Node(package='mnemos_intervention', executable='intervention_recorder', output='screen',
              parameters=[common]),
         Node(package='mnemos_reasoning', executable='memory_advisor', output='screen',

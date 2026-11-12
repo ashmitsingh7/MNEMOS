@@ -42,7 +42,8 @@ class TestBaselineAssets(unittest.TestCase):
 
     def test_all_ros_packages_have_manifest_and_setup(self):
         for package in ('mnemos_robot_description', 'mnemos_simulation', 'mnemos_bringup', 'mnemos_slam',
-                        'mnemos_memory', 'mnemos_intervention', 'mnemos_reasoning', 'mnemos_evaluation'):
+                        'mnemos_control', 'mnemos_memory', 'mnemos_intervention', 'mnemos_reasoning',
+                        'mnemos_evaluation'):
             directory = ROOT / 'src' / package
             self.assertTrue((directory / 'package.xml').is_file())
             self.assertTrue((directory / 'setup.py').is_file())

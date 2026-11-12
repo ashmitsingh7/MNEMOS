@@ -1,5 +1,133 @@
 # MNEMOS — Memory-Driven Navigation through Experience and Spatial Reasoning
 
+MNEMOS is an implementation-first ROS 2 Jazzy research platform for
+**validated episodic navigation**. It learns compact, explainable evidence
+from explicit human corrections, retrieves it in similar lidar/pose contexts,
+and refuses to use it when current geometry contradicts the memory.
+
+It does not replay human trajectories or replace Nav2 safety systems. Nav2
+remains responsible for planning, collision checking, and recovery. MNEMOS
+adds an auditable advisory layer whose only current output is a bounded
+navigation-cost suggestion and its explanation.
+
+## Implementation status
+
+| Component | What ships now |
+| --- | --- |
+| Simulation | Gazebo Harmonic lab, differential-drive robot, lidar, RGB-D camera, IMU, and ROS–Gazebo topic bridge |
+| ROS packages | Eight installable packages: description, simulation, bringup, SLAM monitor, control, intervention, memory/reasoning, and evaluation |
+| Baseline interfaces | Configured launch paths for simulation, RTAB-Map SLAM, and Nav2; live SLAM/Nav2 needs their Jazzy packages installed |
+| Command safety | A human-priority arbiter owns `/cmd_vel`, clamps speed, rejects stale commands, and fails safe to a stop |
+| Intervention capture | Explicit, sustained human overrides become evidence-backed `avoid`, `wait`, `prefer`, `recovery`, or `uncertain` episodes |
+| Episodic memory | SQLite persistence for pose, 24-sector lidar signature, command delta, confidence, semantic tags, and evidence |
+| Reasoning | Interpretable retrieval; geometry/semantic/age validation; contradiction-triggered abstention; bounded advice |
+| Evaluation | Immutable SQLite trial ledger and a matched-seed A/B/C/D ablation protocol |
+
+The repository contains **no measured performance claim**. It only provides
+the platform and protocol needed to test the hypothesis honestly.
+
+## How the implemented system fits together
+
+```text
+Gazebo robot ── lidar / RGB-D / odom ──> ROS bridge ──> RTAB-Map and Nav2
+                                                       │ /cmd_vel_autonomy
+human teleoperation ──────────────────────────────────┤ /cmd_vel_human
+                                                       ▼
+                          /mnemos/human_override ─> command arbiter ─> /cmd_vel
+                                                               │
+                    pose + scan + separate command streams ───┘
+                                                               ▼
+                         intervention recorder ─> SQLite episode ledger
+                                                               │
+                                     retrieval + validation + bounded advice
+                                                               ▼
+                      /mnemos/memory_cost_bias and /mnemos/memory_advice
+```
+
+The memory adviser never writes `/cmd_vel`, takes TF ownership, or bypasses a
+collision layer. A Nav2 costmap-plugin integration is deliberately deferred
+until the conventional runtime stack has passed live safety tests.
+
+## Build and verification
+
+```bash
+cd /home/singh/mnemos-robotics
+source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+
+python3 -m unittest discover -s tests -v
+gz sdf -k src/mnemos_simulation/worlds/lab.sdf
+gz sdf -k src/mnemos_simulation/worlds/mnemos_robot.sdf
+```
+
+The test suite covers the simulator/bridge configuration, package manifests,
+SQLite episode round trips, retrieval ranking, contradiction abstention,
+bounded advice, intervention rules, command-arbitration safety, and trial
+metrics.
+
+## Runtime dependencies and launch paths
+
+The existing development environment has ROS 2 Jazzy, Gazebo Harmonic,
+`ros_gz_sim`, and `ros_gz_bridge`. To run the complete SLAM/navigation stack,
+install:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  ros-jazzy-rtabmap-ros ros-jazzy-rtabmap-launch \
+  ros-jazzy-nav2-bringup ros-jazzy-navigation2
+```
+
+Then use the source overlay and launch one operating mode:
+
+```bash
+ros2 launch mnemos_bringup simulation.launch.py
+ros2 launch mnemos_bringup slam.launch.py
+ros2 launch mnemos_bringup navigation.launch.py map:=$HOME/mnemos_map.yaml
+ros2 launch mnemos_bringup cognitive.launch.py
+```
+
+`cognitive.launch.py` runs the command arbiter, intervention recorder, and
+memory adviser. The recorder needs an explicit `std_msgs/Bool` message on
+`/mnemos/human_override`; while it is true, stale human input yields a stop,
+not a surprise return to autonomous motion.
+
+Useful observability topics:
+
+```bash
+ros2 topic echo /mnemos/command_arbitration
+ros2 topic echo /mnemos/intervention_events
+ros2 topic echo /mnemos/memory_advice
+ros2 topic echo /mnemos/memory_cost_bias
+```
+
+## Implementation map
+
+```text
+src/
+├── mnemos_robot_description/  # URDF and RViz configuration
+├── mnemos_simulation/         # Gazebo Harmonic world and robot SDF
+├── mnemos_bringup/            # simulation, SLAM, navigation, cognitive launches
+├── mnemos_slam/               # input-readiness monitor
+├── mnemos_control/            # human-priority final-command policy
+├── mnemos_intervention/       # override interpretation and episode recording
+├── mnemos_memory/             # episode model, SQLite storage, similarity retrieval
+├── mnemos_reasoning/          # validation and bounded advisory output
+└── mnemos_evaluation/         # reproducible trial ledger
+
+docs/
+├── BASELINE_RUNBOOK.md
+├── COGNITIVE_ARCHITECTURE.md
+└── EXPERIMENTATION.md
+
+experiments/protocols/mnemos_ablation.yaml
+```
+
+Read [the baseline runbook](docs/BASELINE_RUNBOOK.md), [the cognitive
+architecture](docs/COGNITIVE_ARCHITECTURE.md), and [the experiment guide](docs/EXPERIMENTATION.md)
+for contracts, acceptance criteria, and limitations.
+
 ## Project Overview
 
 MNEMOS is a simulation-first mobile robotics research platform that learns from human teleoperation interventions, converts those interventions into contextual episodic memories, retrieves relevant experiences during future navigation, and adapts its decisions based on whether previous experiences remain valid.
@@ -31,7 +159,11 @@ MNEMOS is a simulation-first mobile robotics research platform that learns from 
 - Never blindly follow previously recorded routes
 - Current perception and collision-safety constraints take precedence over historical memory
 
-## Repository Structure
+## Target research layout
+
+The following is the broader planned research layout. Directories and modules
+not shown in the **Implementation map** above are roadmap items, not claims of
+completed functionality.
 
 ```
 mnemos-robotics/
@@ -117,24 +249,13 @@ Maintain a development log. Never silently skip failed tests. Never claim a feat
 
 ## Getting Started
 
-See `docs/INSTALLATION.md` for installation instructions and `docs/TROUBLESHOOTING.md` for common issues.
-
-The runnable Milestone 3–4 baseline (Gazebo Harmonic simulation, RTAB-Map
-mapping, and Nav2 navigation) is documented in
-[`docs/BASELINE_RUNBOOK.md`](docs/BASELINE_RUNBOOK.md). The cognitive modules
-described above remain future work; the baseline is intentionally conventional
-so later experiments have an auditable comparison point.
-
-The novel MNEMOS layer is specified in
-[`docs/COGNITIVE_ARCHITECTURE.md`](docs/COGNITIVE_ARCHITECTURE.md). It records
-human corrections as validated, explainable episodic evidence and emits only
-bounded navigation-cost advice; it never blindly replays a prior route.
-
-[`docs/EXPERIMENTATION.md`](docs/EXPERIMENTATION.md) and the versioned
-ablation protocol define how the hypothesis is tested without hiding failed
-trials or safety regressions.
-
-For the initial execution instructions, see the `Initial Execution Instructions` section of the project specification (Section 20), which outlines stepping through environment inspection, repository creation, robot simulation, baseline SLAM/navigation, and reporting.
+Start with **Build and verification** above. For runtime details, use the
+[baseline runbook](docs/BASELINE_RUNBOOK.md); for episode, validation, and
+safety semantics, use the [cognitive architecture](docs/COGNITIVE_ARCHITECTURE.md).
+The [experiment guide](docs/EXPERIMENTATION.md) and versioned
+[ablation protocol](experiments/protocols/mnemos_ablation.yaml) define the
+evidence required to evaluate the project without hiding failures or safety
+regressions.
 
 ## Citation
 

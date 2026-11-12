@@ -11,8 +11,9 @@ and a capped cost bias.
 
 ```
 autonomy command ─┐
-                  ├─ Intervention recorder ──> SQLite episode ledger
-human command ────┘          ▲                          │
+                  ├─ Command arbiter ─> /cmd_vel
+human command ────┘          │
+                             └─ Intervention recorder ──> SQLite episode ledger
 odom + lidar ────────────────┘                          ▼
 odom + lidar ─────> Context query ─> validate ─> bounded advice ─> Nav2 adapter (future)
                                               └─> audit topic
@@ -51,8 +52,11 @@ dominate it.
 
 ## Operating it
 
-The recorder expects a command multiplexer or teleoperation bridge to preserve
-the two inputs below before it produces the final `/cmd_vel`:
+`mnemos_control` now owns the final `/cmd_vel` topic. The human override
+Boolean makes intervention boundaries explicit; while it is active, a stale
+human command causes a fail-safe stop rather than a fall-back to autonomy. The
+recorder only learns while this override is active. It consumes the inputs
+below:
 
 ```text
 /cmd_vel_autonomy  geometry_msgs/Twist  proposed autonomous command

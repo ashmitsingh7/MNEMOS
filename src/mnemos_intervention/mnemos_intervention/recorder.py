@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import String
+from std_msgs.msg import Bool, String
 
 from mnemos_memory.model import Episode
 from mnemos_memory.context import scan_signature
@@ -27,6 +27,7 @@ class InterventionRecorder(Node):
         self.pose: tuple[float, float, float] | None = None
         self.signature: tuple[float, ...] = ()
         self.nearest_obstacle: float | None = None
+        self.human_override = False
         self.started_at: float | None = None
         self.recorded = False
         self.publisher = self.create_publisher(String, '/mnemos/intervention_events', 10)
@@ -34,6 +35,7 @@ class InterventionRecorder(Node):
         self.create_subscription(Twist, '/cmd_vel_human', self._human, 10)
         self.create_subscription(Odometry, '/odom', self._odom, 10)
         self.create_subscription(LaserScan, '/scan', self._scan, 10)
+        self.create_subscription(Bool, '/mnemos/human_override', self._override, 10)
         self.create_timer(0.05, self._evaluate)
 
     def _autonomous(self, message: Twist) -> None:
@@ -53,11 +55,14 @@ class InterventionRecorder(Node):
         valid = [value for value in message.ranges if message.range_min <= value <= message.range_max]
         self.nearest_obstacle = min(valid) if valid else None
 
+    def _override(self, message: Bool) -> None:
+        self.human_override = message.data
+
     def _evaluate(self) -> None:
         divergence = hypot(self.human.linear - self.autonomous.linear,
                            self.human.angular - self.autonomous.angular)
         now = monotonic()
-        if divergence >= 0.12:
+        if self.human_override and divergence >= 0.12:
             self.started_at = self.started_at or now
             if self.recorded or self.pose is None or not self.signature:
                 return

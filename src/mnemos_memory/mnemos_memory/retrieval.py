@@ -21,6 +21,8 @@ def _jaccard(left: tuple[str, ...], right: tuple[str, ...]) -> float:
 def signature_similarity(left: tuple[float, ...], right: tuple[float, ...], scale: float = 1.5) -> float:
     if not left or not right or len(left) != len(right):
         return 0.0
+    if scale <= 0:
+        return 1.0 if left == right else 0.0
     distance = sum((a - b) ** 2 for a, b in zip(left, right)) / len(left)
     return exp(-distance / (2 * scale * scale))
 

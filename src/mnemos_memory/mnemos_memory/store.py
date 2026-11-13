@@ -42,7 +42,10 @@ class EpisodeStore:
 
     def recent(self, limit: int = 500) -> list[Episode]:
         with self._connect() as connection:
-            rows = connection.execute('SELECT * FROM episodes ORDER BY created_at DESC LIMIT ?', (limit,)).fetchall()
+            if limit is None:
+                rows = connection.execute('SELECT * FROM episodes ORDER BY created_at DESC').fetchall()
+            else:
+                rows = connection.execute('SELECT * FROM episodes ORDER BY created_at DESC LIMIT ?', (limit,)).fetchall()
         episodes = []
         for row in rows:
             record = dict(row)

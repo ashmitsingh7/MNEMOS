@@ -6,6 +6,7 @@ def scan_signature(scan: LaserScan, sectors: int = 24) -> tuple[float, ...]:
     """Compress a scan into per-sector minima without retaining raw sensor data."""
     if not scan.ranges:
         return ()
+    sectors = max(1, sectors)
     size = max(1, len(scan.ranges) // sectors)
     signature = []
     for index in range(sectors):

@@ -21,6 +21,8 @@ class MemoryAdvisor(Node):
         super().__init__('mnemos_memory_advisor')
         self.declare_parameter('database_path', '~/.ros/mnemos_episodes.sqlite3')
         self.declare_parameter('minimum_similarity', 0.55)
+        self.declare_parameter('contradiction_threshold', 0.25)
+        self.declare_parameter('maximum_age_seconds', 60 * 60 * 24 * 21)
         self.store = EpisodeStore(self.get_parameter('database_path').value)
         self.pose: tuple[float, float, float] | None = None
         self.signature: tuple[float, ...] = ()
@@ -42,6 +44,7 @@ class MemoryAdvisor(Node):
 
     def _advise(self) -> None:
         if self.pose is None or not self.signature:
+            self.cost_publisher.publish(Float32(data=0.0))
             return
         current = Episode(EpisodeKind.UNCERTAIN, *self.pose, self.signature)
         matches = retrieve(self.store.recent(), current, self.get_parameter('minimum_similarity').value, limit=1)
@@ -49,7 +52,10 @@ class MemoryAdvisor(Node):
             self.cost_publisher.publish(Float32(data=0.0))
             return
         episode, similarity = matches[0]
-        recommendation = advise(episode, similarity, validate(episode, current))
+        recommendation = advise(episode, similarity, validate(
+            episode, current,
+            contradiction_threshold=self.get_parameter('contradiction_threshold').value,
+            maximum_age_seconds=self.get_parameter('maximum_age_seconds').value))
         self.cost_publisher.publish(Float32(data=recommendation.cost_bias))
         self.audit_publisher.publish(String(data=json.dumps({
             'episode_id': episode.identifier, 'action': recommendation.action,

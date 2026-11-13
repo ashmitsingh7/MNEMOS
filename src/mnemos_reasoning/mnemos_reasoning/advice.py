@@ -20,7 +20,7 @@ def advise(episode: Episode, similarity: Similarity, validation: ValidationResul
         return CognitiveAdvice(0.0, 0.0, 'abstain', validation.explanation)
     confidence = min(1.0, episode.confidence * similarity.total * validation.score)
     direction = 1.0 if episode.kind in (EpisodeKind.AVOID, EpisodeKind.RECOVERY) else -1.0
-    if episode.kind is EpisodeKind.UNCERTAIN:
+    if episode.kind == EpisodeKind.UNCERTAIN:
         direction = 0.0
     bias = direction * min(maximum_absolute_bias, maximum_absolute_bias * confidence)
     action = 'raise_local_cost' if bias > 0 else ('lower_local_cost' if bias < 0 else 'abstain')

@@ -1,0 +1,10 @@
+[project]
+name = "mnemos-core"
+version = "0.1.0"
+description = "Pure-Python core of MNEMOS (memory, intervention, reasoning, evaluation)"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

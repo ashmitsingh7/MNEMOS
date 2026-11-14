@@ -58,3 +58,27 @@ def evaluate_validation(cases: Iterable[ValidationCase]) -> dict:
                                         if expected_contradictions else 1.0),
         'abstention_rate': inadmissible / total if total else 0.0,
     }
+
+
+def scenario_validation_cases(stored: Episode, now: float = 100.0) -> dict[str, ValidationCase]:
+    """Build labeled validation cases for the Stage 4 changed-context scenarios."""
+    unchanged = Episode(kind=stored.kind, pose_x=stored.pose_x, pose_y=stored.pose_y,
+                        pose_yaw=stored.pose_yaw, scan_signature=stored.scan_signature,
+                        semantic_tags=stored.semantic_tags, created_at=stored.created_at)
+    moved = Episode(kind=stored.kind, pose_x=stored.pose_x, pose_y=stored.pose_y,
+                    pose_yaw=stored.pose_yaw,
+                    scan_signature=tuple(max(0.1, v * 0.3) for v in stored.scan_signature),
+                    semantic_tags=stored.semantic_tags, created_at=stored.created_at)
+    cleared = Episode(kind=stored.kind, pose_x=stored.pose_x, pose_y=stored.pose_y,
+                      pose_yaw=stored.pose_yaw,
+                      scan_signature=tuple(v * 1.6 for v in stored.scan_signature),
+                      semantic_tags=stored.semantic_tags, created_at=stored.created_at)
+    novel = Episode(kind=stored.kind, pose_x=stored.pose_x + 0.5, pose_y=stored.pose_y + 0.5,
+                    pose_yaw=stored.pose_yaw, scan_signature=stored.scan_signature,
+                    semantic_tags=stored.semantic_tags, created_at=stored.created_at)
+    return {
+        'familiar_clear': ValidationCase(stored, unchanged, now, True),
+        'temporary_blockage': ValidationCase(stored, moved, now, False, True),
+        'cleared_passage': ValidationCase(stored, cleared, now, True),
+        'novel_obstacle': ValidationCase(stored, novel, now, True),
+    }

@@ -38,4 +38,8 @@ def generate_launch_description():
                               description='Absolute path to a Gazebo Harmonic SDF world.'),
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         gazebo, bridge, state_publisher, spawn, readiness,
+        Node(package='tf2_ros', executable='static_transform_publisher', output='screen',
+             arguments=['--frame-id', 'camera_link', '--child-frame-id', 'mnemos/base_link/rgbd_camera']),
+        Node(package='tf2_ros', executable='static_transform_publisher', output='screen',
+             arguments=['--frame-id', 'base_footprint', '--child-frame-id', 'base_link']),
     ])

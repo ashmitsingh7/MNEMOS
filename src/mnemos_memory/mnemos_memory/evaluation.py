@@ -47,3 +47,13 @@ def evaluate_retrieval(cases: Iterable[RetrievalCase]) -> dict:
         'mean_reciprocal_rank': sum(reciprocal_ranks) / total if total else 0.0,
         'mean_retrieved': sum(retrieved_counts) / total if total else 0.0,
     }
+
+
+def scenario_retrieval_case(stored: Episode, current: Episode, relevant: set[str] | None = None,
+                            minimum_similarity: float = 0.55, limit: int = 5) -> RetrievalCase:
+    """Convenience builder for a single labeled retrieval query."""
+    if relevant is None:
+        relevant = {stored.identifier}
+    return RetrievalCase(episodes=[stored], current=current,
+                        relevant=relevant, minimum_similarity=minimum_similarity,
+                        limit=limit)

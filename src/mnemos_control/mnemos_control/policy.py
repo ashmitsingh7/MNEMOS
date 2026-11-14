@@ -50,6 +50,8 @@ class ArbitrationPolicy:
                        max(-self.max_angular, min(self.max_angular, command.angular)))
 
     def decide(self, now: float) -> Decision:
+        if now is None:
+            now = 0.0
         if self.human_override and self._fresh(self.human, now):
             return Decision(self._bounded(self.human[0]), CommandSource.HUMAN, 'Active human override.')
         if self.human_override:

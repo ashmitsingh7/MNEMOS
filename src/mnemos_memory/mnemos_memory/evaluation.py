@@ -17,6 +17,8 @@ class RetrievalCase:
 
 
 def evaluate_retrieval(cases: Iterable[RetrievalCase]) -> dict:
+    if cases is None:
+        cases = []
     cases = list(cases)
     precisions = []
     recalls = []

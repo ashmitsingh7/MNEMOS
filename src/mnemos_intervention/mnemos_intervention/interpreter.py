@@ -24,7 +24,7 @@ def interpret(autonomous: Command, human: Command, nearest_obstacle: float | Non
     linear_delta = human.linear - autonomous.linear
     angular_delta = human.angular - autonomous.angular
     magnitude = hypot(linear_delta, angular_delta)
-    if sustained_seconds < min_duration or magnitude < 0.12:
+    if sustained_seconds is None or sustained_seconds < min_duration or magnitude < 0.12:
         return Interpretation(EpisodeKind.UNCERTAIN, 0.0, ('Deviation was too brief or too small.',))
     evidence = [f'linear_delta={linear_delta:.2f}', f'angular_delta={angular_delta:.2f}',
                 f'duration={sustained_seconds:.2f}s']

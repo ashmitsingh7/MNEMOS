@@ -43,6 +43,21 @@ class TrialLedger:
                 :path_length_meters,:interventions,:collision_events,:notes)''',
                                {**asdict(trial), 'success': int(trial.success)})
 
+    def count(self, configuration: str | None = None, scenario: str | None = None) -> int:
+        query = 'SELECT COUNT(*) FROM trials'
+        parameters: list = []
+        conditions = []
+        if configuration is not None:
+            conditions.append('configuration=?')
+            parameters.append(configuration)
+        if scenario is not None:
+            conditions.append('scenario=?')
+            parameters.append(scenario)
+        if conditions:
+            query += ' WHERE ' + ' AND '.join(conditions)
+        with self._connect() as connection:
+            return int(connection.execute(query, parameters).fetchone()[0])
+
     def summary(self, configuration: str, scenario: str) -> dict[str, float | int]:
         with self._connect() as connection:
             row = connection.execute('''SELECT COUNT(*) AS trials, AVG(success) AS success_rate,

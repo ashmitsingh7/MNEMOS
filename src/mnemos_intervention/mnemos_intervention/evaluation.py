@@ -35,6 +35,8 @@ def predict(example: LabeledIntervention, min_duration: float = 0.40) -> Episode
 
 def confusion_matrix(examples: Iterable[LabeledIntervention] = LABELED_INTERVENTIONS
                     ) -> dict[EpisodeKind, dict[EpisodeKind, int]]:
+    if examples is None:
+        examples = []
     matrix: dict[EpisodeKind, dict[EpisodeKind, int]] = defaultdict(lambda: defaultdict(int))
     for example in examples:
         matrix[example.expected][predict(example)] += 1
@@ -42,6 +44,8 @@ def confusion_matrix(examples: Iterable[LabeledIntervention] = LABELED_INTERVENT
 
 
 def classification_report(examples: Iterable[LabeledIntervention] = LABELED_INTERVENTIONS) -> dict:
+    if examples is None:
+        examples = []
     examples = list(examples)
     predictions = [predict(example) for example in examples]
     expected = [example.expected for example in examples]

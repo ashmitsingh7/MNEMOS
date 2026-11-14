@@ -23,6 +23,7 @@ class MemoryAdvisor(Node):
         self.declare_parameter('minimum_similarity', 0.55)
         self.declare_parameter('contradiction_threshold', 0.25)
         self.declare_parameter('maximum_age_seconds', 60 * 60 * 24 * 21)
+        self.declare_parameter('map_session_id', 'default')
         self.store = EpisodeStore(self.get_parameter('database_path').value)
         self.pose: tuple[float, float, float] | None = None
         self.signature: tuple[float, ...] = ()
@@ -46,7 +47,8 @@ class MemoryAdvisor(Node):
         if self.pose is None or not self.signature:
             self.cost_publisher.publish(Float32(data=0.0))
             return
-        current = Episode(EpisodeKind.UNCERTAIN, *self.pose, self.signature)
+        current = Episode(EpisodeKind.UNCERTAIN, *self.pose, self.signature,
+                         map_session_id=self.get_parameter('map_session_id').value)
         matches = retrieve(self.store.recent(), current, self.get_parameter('minimum_similarity').value, limit=1)
         if not matches:
             self.cost_publisher.publish(Float32(data=0.0))

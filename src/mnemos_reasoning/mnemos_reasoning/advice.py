@@ -16,8 +16,9 @@ class CognitiveAdvice:
 def advise(episode: Episode, similarity: Similarity, validation: ValidationResult,
            maximum_absolute_bias: float = 0.35) -> CognitiveAdvice:
     """Apply a cap so perception/collision constraints always dominate memory."""
-    if not validation.admissible:
-        return CognitiveAdvice(0.0, 0.0, 'abstain', validation.explanation)
+    if validation is None or not validation.admissible:
+        explanation = () if validation is None else validation.explanation
+        return CognitiveAdvice(0.0, 0.0, 'abstain', explanation)
     confidence = min(1.0, episode.confidence * similarity.total * validation.score)
     direction = 1.0 if episode.kind in (EpisodeKind.AVOID, EpisodeKind.RECOVERY) else -1.0
     if episode.kind == EpisodeKind.UNCERTAIN:

@@ -17,6 +17,8 @@ class ValidationCase:
 
 
 def evaluate_validation(cases: Iterable[ValidationCase]) -> dict:
+    if cases is None:
+        cases = []
     cases = list(cases)
     true_positive = false_positive = true_negative = false_negative = 0
     expected_contradictions = detected_contradictions = 0

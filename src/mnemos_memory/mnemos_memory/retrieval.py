@@ -28,8 +28,11 @@ def signature_similarity(left: tuple[float, ...], right: tuple[float, ...], scal
 
 
 def compare(episode: Episode, current: Episode, position_sigma: float = 1.25) -> Similarity:
-    position = exp(-(hypot(episode.pose_x - current.pose_x, episode.pose_y - current.pose_y) ** 2) /
-                   (2 * position_sigma * position_sigma))
+    distance = hypot(episode.pose_x - current.pose_x, episode.pose_y - current.pose_y)
+    if position_sigma <= 0:
+        position = 1.0 if distance == 0.0 else 0.0
+    else:
+        position = exp(-(distance ** 2) / (2 * position_sigma * position_sigma))
     scan = signature_similarity(episode.scan_signature, current.scan_signature)
     geometry = 0.45 * position + 0.55 * scan
     semantics = _jaccard(episode.semantic_tags, current.semantic_tags)
@@ -42,6 +45,13 @@ def compare(episode: Episode, current: Episode, position_sigma: float = 1.25) ->
 
 def retrieve(episodes: list[Episode], current: Episode, minimum_similarity: float = 0.55,
              limit: int = 5) -> list[tuple[Episode, Similarity]]:
-    matches = [(episode, compare(episode, current)) for episode in episodes]
-    return sorted((match for match in matches if match[1].total >= minimum_similarity),
-                  key=lambda match: match[1].total, reverse=True)[:limit]
+    if not episodes or current is None:
+        return []
+    if limit is None:
+        limit = len(episodes)
+    if limit <= 0:
+        return []
+    matches = [(episode, compare(episode, current)) for episode in episodes if episode is not None]
+    matches = [match for match in matches if match[1].total >= minimum_similarity]
+    matches.sort(key=lambda match: match[1].total, reverse=True)
+    return matches[:limit]

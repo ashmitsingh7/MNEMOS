@@ -14,24 +14,25 @@ navigation-cost suggestion and its explanation.
 
 | Component | What ships now |
 | --- | --- |
-| Simulation | Gazebo Harmonic lab, differential-drive robot, lidar, RGB-D camera, IMU, and ROS–Gazebo topic bridge |
-| ROS packages | Nine installable packages: description, simulation, bringup, SLAM monitor, control, intervention, memory, reasoning, and evaluation |
-| Baseline interfaces | Configured launch paths for simulation, RTAB-Map SLAM, and Nav2; live SLAM/Nav2 needs their Jazzy packages installed |
-| Command safety | A human-priority arbiter owns `/cmd_vel`, clamps speed, rejects stale commands, and fails safe to a stop |
-| Intervention capture | Explicit, sustained human overrides become evidence-backed `avoid`, `wait`, `prefer`, `recovery`, or `uncertain` episodes |
-| Episodic memory | SQLite persistence for pose, 24-sector lidar signature, command delta, confidence, semantic tags, and evidence |
+| Simulation | Gazebo Harmonic lab/warehouse, differential-drive robot, lidar, RGB-D camera, IMU, ROS–Gazebo bridge |
+| ROS packages | Nine installable packages: description, simulation, bringup, SLAM monitor, control, intervention, memory, reasoning, evaluation |
+| Baseline interfaces | Configured launch paths for simulation, RTAB-Map SLAM, and Nav2 (live SLAM/Nav2 need their Jazzy packages installed) |
+| Command safety | Human-priority arbiter owns `/cmd_vel`, clamps speed, rejects stale commands, fails safe to stop |
+| Intervention capture | Explicit sustained human overrides become evidence-backed `avoid`, `wait`, `prefer`, `recovery`, or `uncertain` episodes |
+| Episodic memory | SQLite persistence of pose, 24-sector lidar signature, command deltas/streams, confidence, tags, evidence, goal, session id, intervention interval, outcome, bag reference |
 | Reasoning | Interpretable retrieval; geometry/semantic/age validation; contradiction-triggered abstention; bounded advice |
-| Evaluation | Immutable SQLite trial ledger and a matched-seed A/B/C/D ablation protocol |
+| Evaluation | Immutable SQLite trial ledger, matched-seed A/B/C/D ablation protocol, offline retrieval/validation/intervention metrics |
+| Hardening | Edge-case guards, schema migration, null-safe APIs, 48 passing tests |
 
 The repository contains **no measured performance claim**. It only provides
 the platform and protocol needed to test the hypothesis honestly.
 
-## How the implemented system fits together
+## How the system fits together
 
 ```text
 Gazebo robot ── lidar / RGB-D / odom ──> ROS bridge ──> RTAB-Map and Nav2
                                                        │ /cmd_vel_autonomy
-human teleoperation ──────────────────────────────────┤ /cmd_vel_human
+human teleoperation ───────────────────────────────────┤ /cmd_vel_human
                                                        ▼
                           /mnemos/human_override ─> command arbiter ─> /cmd_vel
                                                                │
@@ -45,8 +46,8 @@ human teleoperation ────────────────────
 ```
 
 The memory adviser never writes `/cmd_vel`, takes TF ownership, or bypasses a
-collision layer. A Nav2 costmap-plugin integration is deliberately deferred
-until the conventional runtime stack has passed live safety tests.
+collision layer. Nav2 costmap-plugin integration is deliberately deferred
+until the conventional runtime stack passes live safety tests.
 
 ## Build and verification
 
@@ -61,16 +62,15 @@ gz sdf -k src/mnemos_simulation/worlds/lab.sdf
 gz sdf -k src/mnemos_simulation/worlds/mnemos_robot.sdf
 ```
 
-The test suite covers the simulator/bridge configuration, package manifests,
-SQLite episode round trips, retrieval ranking, contradiction abstention,
-bounded advice, intervention rules, command-arbitration safety, and trial
-metrics.
+The test suite (48 tests) covers simulator/bridge configuration, package
+manifests, SQLite episode round trips and migration, retrieval ranking and
+edge cases, contradiction abstention, bounded advice, intervention rules,
+command-arbitration safety, trial metrics, and offline evaluation helpers.
 
 ## Runtime dependencies and launch paths
 
-The existing development environment has ROS 2 Jazzy, Gazebo Harmonic,
-`ros_gz_sim`, and `ros_gz_bridge`. To run the complete SLAM/navigation stack,
-install:
+The environment has ROS 2 Jazzy, Gazebo Harmonic, `ros_gz_sim`, and
+`ros_gz_bridge`. For the full SLAM/navigation stack, install:
 
 ```bash
 sudo apt-get update
@@ -89,9 +89,8 @@ ros2 launch mnemos_bringup cognitive.launch.py
 ```
 
 `cognitive.launch.py` runs the command arbiter, intervention recorder, and
-memory adviser. The recorder needs an explicit `std_msgs/Bool` message on
-`/mnemos/human_override`; while it is true, stale human input yields a stop,
-not a surprise return to autonomous motion.
+memory adviser. The recorder needs an explicit `std_msgs/Bool` on
+`/mnemos/human_override`; while it is true, stale human input yields a stop.
 
 Useful observability topics:
 
@@ -100,6 +99,7 @@ ros2 topic echo /mnemos/command_arbitration
 ros2 topic echo /mnemos/intervention_events
 ros2 topic echo /mnemos/memory_advice
 ros2 topic echo /mnemos/memory_cost_bias
+ros2 topic echo /mnemos/slam_inputs_ready
 ```
 
 ## Implementation map
@@ -115,144 +115,113 @@ src/
 ├── mnemos_memory/             # episode model, SQLite storage, similarity retrieval
 ├── mnemos_reasoning/          # validation and bounded advisory output
 └── mnemos_evaluation/         # reproducible trial ledger
-
-docs/
-├── BASELINE_RUNBOOK.md
-├── COGNITIVE_ARCHITECTURE.md
-└── EXPERIMENTATION.md
-
-experiments/protocols/mnemos_ablation.yaml
 ```
 
-Read [the baseline runbook](docs/BASELINE_RUNBOOK.md), [the cognitive
-architecture](docs/COGNITIVE_ARCHITECTURE.md), and [the experiment guide](docs/EXPERIMENTATION.md)
-for contracts, acceptance criteria, and limitations.
+## Project overview
 
-## Project Overview
+MNEMOS is a simulation-first mobile robotics research platform that learns
+from human teleoperation interventions, converts them into contextual
+episodic memories, retrieves relevant experiences during future navigation,
+and adapts decisions based on whether previous experiences remain valid.
 
-MNEMOS is a simulation-first mobile robotics research platform that learns from human teleoperation interventions, converts those interventions into contextual episodic memories, retrieves relevant experiences during future navigation, and adapts its decisions based on whether previous experiences remain valid.
-
-**Primary Objective:** Develop a navigation architecture combining spatial understanding, intervention interpretation, contextual episodic memory, and memory validation to reduce repeated navigation mistakes and unnecessary human interventions.
+**Primary objective:** develop a navigation architecture combining spatial
+understanding, intervention interpretation, contextual episodic memory, and
+memory validation to reduce repeated navigation mistakes and unnecessary
+human interventions.
 
 ## Planned research behaviors
 
 ### Mode A — Explore (partially implemented)
-- Receive RGB-D camera data, IMU, and wheel odometry
-- Estimate position and build spatial maps
-- Recognize objects and environmental structures
-- Navigate using conventional autonomous navigation
+- Receive RGB-D, IMU, and wheel odometry; estimate position and build maps;
+  recognize objects/structures; navigate conventionally.
 
-### Mode B — Human Control (command path implemented; interface is roadmap)
-- Interface displays camera feed, position, local/global maps, planned and actual trajectories
-- Records robot pose, autonomous and human velocity commands, obstacle configuration
-- Human control safely overrides autonomous velocity commands
+### Mode B — Human Control (command path implemented)
+- Safe override of autonomous commands; capture robot pose, commands, obstacles.
 
 ### Mode C — Experience Formation (compact episode implemented)
-- Construct contextual episodes after interventions
-- Episodes contain: unique ID, timestamp, spatial location, robot pose, navigation goal, geometric/semantic context, planned action, human intervention, command differences, resulting trajectory, outcome, candidate interpretation, confidence score, validity status
+- Construct contextual episodes after interventions containing ID, timestamp,
+  spatial location, pose, goal, geometric/semantic context, planned action,
+  human intervention, command differences/streams, interval, outcome, bag
+  reference, candidate interpretation, confidence, validity status.
 
-### Mode D — Cognitive Autonomous Navigation (advisory layer implemented; Nav2 costmap integration is roadmap)
-- Identify current context and retrieve relevant episodes
-- Calculate similarity between current and previous situations
-- Check whether previous experiences are still valid
-- Modify navigation costs or candidate actions when justified
-- Never blindly follow previously recorded routes
-- Current perception and collision-safety constraints take precedence over historical memory
+### Mode D — Cognitive Autonomous Navigation (advisory layer implemented)
+- Retrieve relevant episodes, compute similarity, validate against current
+  geometry, emit bounded advice. Nav2 costmap integration is roadmap.
 
 ## Target research layout
 
-The following is the broader planned research layout. Directories and modules
-not shown in the **Implementation map** above are roadmap items, not claims of
-completed functionality.
-
-```
+```text
 mnemos-robotics/
-├── README.md                          # This file
-├── LICENSE
-├── CONTRIBUTING.md
-├── .gitignore
-├── docs/                              # Documentation directory
-│   ├── PROJECT_OVERVIEW.md
-│   ├── RESEARCH_PROBLEM.md
-│   ├── SYSTEM_ARCHITECTURE.md
-│   ├── MATHEMATICAL_FOUNDATIONS.md
-│   ├── DESIGN_DECISIONS.md
-│   ├── EXPERIMENT_PROTOCOL.md
-│   ├── EXPERIMENT_RESULTS.md
-│   ├── INSTALLATION.md
-│   ├── TROUBLESHOOTING.md
-│   └── GLOSSARY.md
-├── src/                               # ROS 2 packages
-│   ├── mnemos_interfaces/             # Custom ROS 2 messages and services
-│   ├── mnemos_robot_description/      # Robot URDF/XACRO models
-│   ├── mnemos_simulation/             # Gazebo Harmonic models and worlds
-│   ├── mnemos_bringup/                # Launch files and configuration
-│   ├── mnemos_perception/             # Perception pipeline packages
-│   ├── mnemos_slam/                   # RTAB-Map integration and educational modules
-│   ├── mnemos_world_model/            # Metric, topological, semantic, spatial relationship representations
-│   ├── mnemos_teleoperation/          # Teleoperation interface
-│   ├── mnemos_intervention/           # Intervention interpretation engine
-│   ├── mnemos_memory/                 # Episodic memory engine
-│   ├── mnemos_reasoning/              # Cognitive reasoning and validation
-│   ├── mnemos_navigation/             # Cognitive navigation engine integrating with Nav2
-│   └── mnemos_evaluation/             # Experiment framework and metrics
-├── algorithms/                        # Foundational algorithms
-│   ├── camera_geometry/
-│   ├── point_cloud_processing/
-│   ├── visual_features/
-│   ├── state_estimation/
-│   ├── intervention_analysis/
-│   ├── memory_retrieval/
-│   ├── memory_validation/
-│   └── decision_costs/
-├── experiments/                       # Experiment definitions and results
-│   ├── exp01_baseline/
-│   ├── exp02_intervention_learning/
-│   ├── exp03_episodic_memory/
-│   ├── exp04_memory_validation/
-│   └── exp05_ablation/
-├── config/                            # Parameter configuration
-├── scripts/                           # Utility scripts
-├── tests/                             # Test suites
-└── results/                           # Experiment results
-└── notebooks/                         # Jupyter notebooks
+├── README.md
+├── docs/                  # 13 documentation files
+├── src/                   # 9 ROS 2 packages (above)
+├── algorithms/            # foundational algorithms (scaffolded)
+├── experiments/           # ablation protocol + experiment dirs (scaffolded)
+├── config/                # parameter configuration (scaffolded)
+├── scripts/               # utility scripts (scaffolded)
+├── tests/                 # test suites
+├── results/               # experiment results (scaffolded)
+└── notebooks/             # Jupyter notebooks (scaffolded)
 ```
 
-## Development Philosophy
+## Development philosophy
 
-1. Build a modular and understandable research platform.
+1. Build a modular, understandable research platform.
 2. Prefer established algorithms for foundational capabilities.
-3. Develop original implementations for the central research contribution.
-4. Keep perception, SLAM, memory, reasoning, and navigation independently testable.
+3. Original implementations for the central research contribution.
+4. Keep perception, SLAM, memory, reasoning, navigation independently testable.
 5. Never hide algorithmic complexity behind a black-box API.
-6. Avoid unnecessary deep learning models.
-7. Do not train large neural networks without a clear research requirement.
-8. Make all major decisions explainable and inspectable.
-9. Record experiments and provide reproducible results.
-10. Never claim an improvement without experimental evidence.
+6. Avoid unnecessary deep learning.
+7. Make all major decisions explainable and inspectable.
+8. Record experiments and provide reproducible results.
+9. Never claim an improvement without experimental evidence.
 
-## Development Workflow
+## Development workflow
 
-Work in milestones. For each milestone:
-1. Explain the objective
-2. Inspect existing files
-3. Propose the architecture
-4. Implement the smallest working version
-5. Build the affected packages
-6. Run tests
-7. Run the relevant simulation
-8. Document results
-9. Explain the implementation
-10. Identify remaining problems
+Work in milestones. For each: explain objective, inspect files, propose
+architecture, implement smallest working version, build, test, run simulation,
+document, explain, identify remaining problems. Maintain a development log.
+Never silently skip failed tests; never claim a feature is only a placeholder.
 
-Maintain a development log. Never silently skip failed tests. Never claim a feature is implemented when it is only represented by a placeholder.
+## Staged plan and status
 
-## Getting Started
+### Stage 1 — Complete conventional navigation baseline
+Install RTAB-Map/Nav2, build map, localize, send safe goals, record metrics.
+**Status:** blocked on system packages (no sudo).
+
+### Stage 2 — Verify human-priority command control
+Autonomy/override/stale/clamping/emergency transitions with odometry checks.
+**Status:** code and tests complete; live trace pending.
+
+### Stage 3 — Make intervention episodes experimentally grounded
+Capture goal, map/session id, pose, scan, both command streams, intervention
+interval, post-intervention outcome, bag reference. **Status:** implemented.
+
+### Stage 4 — Validate contextual memory offline
+Context representation, retrieval vs. human relevance, moved/cleared/temporary
+obstacles, novel geometry, precision/contradiction/false-accept/false-reject/
+abstention metrics, threshold calibration. **Status:** helpers and hardening in
+place.
+
+### Stage 5 — Integrate bounded memory advice with Nav2
+Custom costmap/planner adapter; obstacle/collision checks authoritative;
+default zero influence on stale/missing/failed/low-confidence; diagnostics.
+**Status:** deferred until baseline safety tests.
+
+### Stage 6 — Run controlled experiments
+Matched-seed A/B/C/D protocol; preserve failures; confidence intervals.
+**Status:** protocol defined; data collection pending.
+
+### Stage 7 — Package the research contribution
+Freeze code/params/assets/protocol; docs; negative results; contribution
+boundary. **Status:** pending.
+
+## Getting started
 
 Start with **Build and verification** above. For runtime details, use the
 [baseline runbook](docs/BASELINE_RUNBOOK.md); for episode, validation, and
 safety semantics, use the [cognitive architecture](docs/COGNITIVE_ARCHITECTURE.md).
-The [experiment guide](docs/EXPERIMENTATION.md) and versioned
+The [experiment guide](docs/EXPERIMENTATION.md) and
 [ablation protocol](experiments/protocols/mnemos_ablation.yaml) define the
 evidence required to evaluate the project without hiding failures or safety
 regressions.

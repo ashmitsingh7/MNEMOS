@@ -180,3 +180,27 @@ Common issues and resolutions:
 5. Run RViz2 visualization
 6. Proceed to Milestone 1: Environment and Robot Verification
 ```
+
+## User-space Nav2/RTAB-Map overlay (no sudo)
+
+On machines where `sudo apt install` is unavailable, Nav2 and RTAB-Map can be
+downloaded with `apt-get download` and extracted into a user prefix. This
+repository has been validated with such an overlay.
+
+```bash
+mkdir -p ~/ros2_nav2/debs ~/ros2_nav2/prefix
+cd ~/ros2_nav2/debs
+# Download the RTAB-Map + Nav2 package set and transitive system libs, then:
+for deb in *.deb; do dpkg -x "$deb" ~/ros2_nav2/prefix; done
+```
+
+Source the overlay before building/running MNEMOS:
+
+```bash
+export AMENT_PREFIX_PATH=~/ros2_nav2/prefix/opt/ros/jazzy:/opt/ros/jazzy
+export LD_LIBRARY_PATH=~/ros2_nav2/prefix/opt/ros/jazzy/lib:~/ros2_nav2/prefix/opt/ros/jazzy/lib/x86_64-linux-gnu:~/ros2_nav2/prefix/usr/lib:~/ros2_nav2/prefix/usr/lib/x86_64-linux-gnu:/opt/ros/jazzy/lib:${LD_LIBRARY_PATH}
+source /opt/ros/jazzy/setup.bash
+```
+
+Verified working: `ros2 launch mnemos_bringup slam.launch.py` starts Gazebo,
+RTAB-Map, and the readiness monitor (reports `slam_inputs_ready: true`).

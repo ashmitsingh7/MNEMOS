@@ -31,14 +31,17 @@ Verified in the current environment:
 
 Still unverified or incomplete:
 
-- RTAB-Map and Nav2 packages are not installed in this environment, so map
-  building, localization, and goal navigation have not been run.
+Still unverified or incomplete:
+- Nav2 is not installed system-wide; goal navigation has not been run. (RTAB-Map
+  SLAM is now verified via a user-space overlay: Gazebo + RTAB-Map + readiness
+  monitor report `slam_inputs_ready: true`.)
 - A controlled human command has not yet been traced through the arbiter to
-  physical simulated robot motion and a subsequent stop.
+  physical simulated robot motion and a subsequent stop (cognitive nodes start;
+  a live trace with simulation is the next step).
 - Memory advice is published for inspection but does not influence Nav2.
-- Intervention episodes do not yet capture a complete navigation outcome or
-  goal context, and the interpreter has not been evaluated against labeled
-  corrections.
+- Intervention episodes now capture goal, session, command streams, interval,
+  outcome, and bag reference; the interpreter is evaluated against a labeled set
+  (48/48 tests).
 - No experiment results or performance claims exist.
 
 ## Sequenced plan

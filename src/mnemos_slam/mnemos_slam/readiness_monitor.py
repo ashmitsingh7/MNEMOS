@@ -1,13 +1,13 @@
 """Expose whether the minimum live-sensor set needed by MNEMOS is available."""
 from dataclasses import dataclass
+import signal
+import time
 
 import rclpy
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from sensor_msgs.msg import CameraInfo, Image, LaserScan
 from std_msgs.msg import Bool
-from tf2_ros import TransformBroadcaster
-from geometry_msgs.msg import TransformStamped
 
 
 @dataclass
@@ -23,12 +23,19 @@ class Inputs:
         return all((self.odom, self.scan, self.rgb, self.depth, self.camera_info))
 
 
+def fresh_inputs(required, last_seen, now, timeout):
+    """Return names with a recent monotonic receipt time."""
+    return {name for name in required if now - last_seen.get(name, float('-inf')) <= timeout}
+
+
 class ReadinessMonitor(Node):
-    """Publishes ``/mnemos/slam_inputs_ready`` without pretending SLAM is healthy."""
+    """Publish fresh-input readiness; freshness uses monotonic wall time, not sim time."""
     def __init__(self) -> None:
         super().__init__('mnemos_slam_readiness_monitor')
         self.inputs = Inputs()
-        self.tf_broadcaster = TransformBroadcaster(self)
+        self.declare_parameter('input_timeout_sec', 2.5)
+        self.input_timeout = float(self.get_parameter('input_timeout_sec').value)
+        self.last_seen = {}
         self.publisher = self.create_publisher(Bool, '/mnemos/slam_inputs_ready', 1)
         for message_type, topic, field in (
             (LaserScan, '/scan', 'scan'),
@@ -40,20 +47,16 @@ class ReadinessMonitor(Node):
         self.create_timer(1.0, self._publish)
 
     def _seen(self, field: str) -> None:
-        setattr(self.inputs, field, True)
+        self.last_seen[field] = time.monotonic()
 
     def _odom(self, message: Odometry) -> None:
-        self.inputs.odom = True
-        transform = TransformStamped()
-        transform.header = message.header
-        transform.child_frame_id = message.child_frame_id or 'base_footprint'
-        transform.transform.translation.x = message.pose.pose.position.x
-        transform.transform.translation.y = message.pose.pose.position.y
-        transform.transform.translation.z = message.pose.pose.position.z
-        transform.transform.rotation = message.pose.pose.orientation
-        self.tf_broadcaster.sendTransform(transform)
+        self._seen('odom')
 
     def _publish(self) -> None:
+        now = time.monotonic()
+        fresh = fresh_inputs(vars(self.inputs), self.last_seen, now, self.input_timeout)
+        for field in vars(self.inputs):
+            setattr(self.inputs, field, field in fresh)
         self.publisher.publish(Bool(data=self.inputs.ready))
         if not self.inputs.ready:
             missing = [name for name, value in vars(self.inputs).items() if not value]
@@ -65,6 +68,10 @@ def main() -> None:
     node = ReadinessMonitor()
     try:
         rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
     finally:
+        # Launch sends SIGINT to children too. Ignore repeats while tearing down.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()

@@ -1,4 +1,4 @@
-"""Run Nav2 against a saved MNEMOS map; simulation is optional."""
+"""Run Nav2 against a saved map and an already running robot simulation."""
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
@@ -28,7 +28,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('map', description='Absolute path to a Nav2 map YAML file.'),
         DeclareLaunchArgument('use_sim_time', default_value='true'),
-        DeclareLaunchArgument('with_simulation', default_value='true',
-                              description='Start Gazebo and the MNEMOS robot before Nav2.'),
+        DeclareLaunchArgument('with_simulation', default_value='false',
+                              description='Also start simulation (only for a standalone Nav2 session).'),
         simulation, nav2,
     ])
